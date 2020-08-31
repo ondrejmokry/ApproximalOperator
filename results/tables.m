@@ -1,3 +1,4 @@
+%% full tables
 for index = 1:4
     
     switch index
@@ -19,16 +20,15 @@ for index = 1:4
 
     res = squeeze(max(res,[],5));
     transvec = [{'gab'},{'erb'},{'wav'}];
-    synthesisvec = [{'synthsis'}, {'analysis'}];
+    synthesisvec = [{'synthesis '}, {'analysis  '}];
 
-    fprintf(['\n\n', title, '\n']);
+    fprintf(['\n', title, '\n\n']);
+    fprintf('           DR / CP                | FISTA\n');
+    fprintf('           GAB     WAV     ERB    | GAB     WAV     ERB\n');
     for m = 1:4
-        fprintf('\n')
-        fprintf('--------------------------------- %d ------------------------\n',m);
-        fprintf('           DR / CP                | FISTA\n');
-        fprintf('           GAB     WAV     ERB    | GAB     WAV     ERB\n');
+        fprintf('--------------------------------- %d ------------------------\n',m);       
         for k = 1:2
-            fprintf([synthesisvec{k} ': ']);
+            fprintf(synthesisvec{k});
             for j = [2 1]
                 for l = [1 3 2]
                     fprintf(' %6.3f ',res(m,j,k,l));
@@ -38,5 +38,49 @@ for index = 1:4
             fprintf('\n');
         end
     end
+end
 
+%% differences
+% the experiment with the original setting
+load('01 approximal/Experiments_DRvsFistavsSynvsAna.mat')
+approx = squeeze(max(res,[],5));
+load('01 proximal/Experiments_DRvsFistavsSynvsAna.mat')
+prox = squeeze(max(res,[],5));
+fprintf('\nTable 2\n\n');
+fprintf('           DR / CP                | FISTA\n');
+fprintf('           GAB     WAV     ERB    | GAB     WAV     ERB\n');
+for m = 1:4
+    fprintf('--------------------------------- %d ------------------------\n',m);       
+    for k = 1:2
+        fprintf(synthesisvec{k});
+        for j = [2 1]
+            for l = [1 3 2]
+                fprintf(' %6.3f ',prox(m,j,k,l)-approx(m,j,k,l));
+            end
+            fprintf('|');
+        end
+        fprintf('\n');
+    end
+end
+
+% the experiment with the new setting
+load('02 approximal/Experiments_DRvsFistavsSynvsAna.mat')
+approx = squeeze(max(res,[],5));
+load('02 proximal/Experiments_DRvsFistavsSynvsAna.mat')
+prox = squeeze(max(res,[],5));
+fprintf('\nTable 4\n\n');
+fprintf('           DR / CP                | FISTA\n');
+fprintf('           GAB     WAV     ERB    | GAB     WAV     ERB\n');
+for m = 1:4
+    fprintf('--------------------------------- %d ------------------------\n',m);       
+    for k = 1:2
+        fprintf(synthesisvec{k});
+        for j = [2 1]
+            for l = [1 3 2]
+                fprintf(' %6.3f ',prox(m,j,k,l)-approx(m,j,k,l));
+            end
+            fprintf('|');
+        end
+        fprintf('\n');
+    end
 end

@@ -2,6 +2,7 @@ function [ sol, rel_norm_vec, obj ] = audio_inpainting( orig_sig, depl_sig, mask
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 global approximal;
+global new_settings;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 trans = settings.trans; % 'erb';
@@ -21,8 +22,8 @@ else
 end
 
 plotting = settings.plotting;
-fignum = 10;
-verbose = 0;
+fignum   = 10;
+verbose  = 0;
 
 [r,~] = size(depl_sig);
 if (r==1)
@@ -211,23 +212,25 @@ if synthesis
     f2.eval = @(x) eps;
 else
     % analysis model:
-    f2.prox = @(x,T) x-mask.*x + depl_sig;
+    f2.prox = @(x,T) x - mask.*x + depl_sig;
     f2.grad = @(x) mask.*(mask.*x - depl_sig);
 end
 
 % setting different parameter for the simulation
-param.verbose=2; % display parameter
-param.maxit=200; % maximum iteration
-param.tol=1e-3; % tolerance to stop iterating
+param.verbose = 2; % display parameter
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% settings for the second experiment
-% param.maxit = 500;
-% param.tol = 1e-5;
+if ~new_settings
+    param.maxit = 200;  % maximum iteration
+    param.tol   = 1e-3; % tolerance to stop iterating
+else
+    param.maxit = 500;
+    param.tol   = 1e-5;
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % time step
-param.gamma = 1;
+param.gamma  = 1;
 param.lambda = 0.99;
 
 % initialization
@@ -247,11 +250,11 @@ prev_sol = sol;
 u_n = sol;
 x_n = [];
 obj = [];
-tn = 1;
+tn  = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 x_old = sol;
-y = 0;
+y     = 0;
 x_bar = sol;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -283,14 +286,11 @@ while 1
             CP.K_adj = Psit;
             switch thres
                 case {'lasso','ew'}
-                    CP.prox_f = @(x,T) myproxl1(x,tau*T,paraml1);
+                    CP.prox_f = @(x,T) myproxl1(x,T,paraml1);
                 otherwise
                     CP.prox_f = f1.prox;
             end
             CP.prox_g = f2.prox;
-            
-            % CP_solver.sigma multiplied by 10 for the second experiment,
-            % in order not to stuck at zero solution
             CP_solver.sigma = 10*tau*param.gamma;
             CP_solver.tau = 1/CP_solver.sigma;
             CP_solver.theta = 1;
@@ -313,10 +313,10 @@ while 1
             
             x_n = f1.prox(u_n-param.gamma*f2.grad(u_n), param.gamma);
             tn1 = (1 + sqrt(1 + 4*tn^2))/2;
-            u_n=x_n+(tn-1)/tn1*(x_n-sol);
+            u_n = x_n + (tn-1)/tn1*(x_n - sol);
             
             % updates
-            tn = tn1;
+            tn  = tn1;
             sol = x_n;
             
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
@@ -336,16 +336,17 @@ while 1
             CP.dim = length(orig_sig);
             
             CP_solver.sigma = 1;
-            CP_solver.tau = 1;
+            CP_solver.tau   = 1;
             CP_solver.theta = 1;
             CP_solver.maxit = 25;
+            CP_solver.tol   = -Inf; % the algorithm is forced to run for 25 iterations
             
             [ x_n, ~, ~ ] = ChambollePock(CP,CP_solver);
             tn1 = (1 + sqrt(1 + 4*tn^2))/2;
-            u_n=x_n+(tn-1)/tn1*(x_n-sol);
+            u_n = x_n + (tn-1)/tn1*(x_n - sol);
             
-            %updates
-            tn = tn1;
+            % updates
+            tn  = tn1;
             sol = x_n;
             
             end

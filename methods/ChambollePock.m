@@ -33,13 +33,18 @@ function [ x_hat, obj_val, rel_norm ] = ChambollePock(param,paramsolver)
 %     x_hat ......... solution
 %     obj_val ....... value of f(Kx) + g(x) during the iterations
 %     rel_norm ...... relative norm of x wrt previous iteration
+%
+% Date: 08/07/2020
+% By Ondrej Mokry
+% Brno University of Technology
+% Contact: ondrej.mokry@mensa.cz
 
 %% default settings
 if ~isfield(paramsolver,'sigma')
-    paramsolver.sigma = 1;
+    paramsolver.sigma = 5;
 end
 if ~isfield(paramsolver,'tau')
-    paramsolver.tau = 1;
+    paramsolver.tau = 0.2;
 end
 if ~isfield(paramsolver,'theta')
     paramsolver.theta = 1;
@@ -51,10 +56,10 @@ if ~isfield(paramsolver,'y0')
     paramsolver.y0 = zeros(size(param.K(zeros(param.dim,1))));
 end
 if ~isfield(paramsolver,'maxit')
-    paramsolver.maxit = 1000;
+    paramsolver.maxit = 500;
 end
 if ~isfield(paramsolver,'tol')
-    paramsolver.tol = 1e-4;
+    paramsolver.tol = 5e-4;
 end
 
 %% inicialization

@@ -1,4 +1,4 @@
-%% audio_inpainting tests Dörfler Datasets
+% audio_inpainting tests Dörfler Datasets
 % this script reproduces the results presented in the paper. 
 % Please note, that the LTFAT toolbox (http://ltfat.sourceforge.net/) has 
 % to be included and added to the path.
@@ -6,8 +6,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 addpath('NSGToolbox_V010');
 nsgt_startup;
+
 global approximal;
-approximal = true;
+approximal = false;
+
+global new_settings;
+new_settings = false;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 addpath('methods');
@@ -16,8 +20,6 @@ if (exist('dgtreal') ~= 2)
 else
     warning off; % some methods in the ltfat toolbox might produce warnings
 end
-
-%% synthesis vs. analysis vs DR vs FISTA
 
 snum = [1,2,3,4];
 p = 0.8; % percentage of coefficients to delete
@@ -52,7 +54,7 @@ res_relnorm = cell(length(snum),length(algovec),length(synthesisvec),length(tran
 zzz = 1;
 zzztotal = numel(res(:));
 fix(clock)
-for iii=1:length(snum)
+for iii = 1:length(snum)
     % get signal
     filename = ['./wav/sig_' num2str(snum(iii)) '.wav'];
     [s,fs] = audioread(filename);
@@ -65,14 +67,14 @@ for iii=1:length(snum)
     M = logical(1-Mask);
     snr_m = @(sol) 20 *log10(std(s(M))/std(sol(M)-s(M)));
     
-    for jjj=1:2
+    for jjj = [2 1]
         settings.algo = algovec{jjj};
-        for kkk=1:2
+        for kkk = 1:2
             settings.synthesis = mod(kkk,2);
-            for lll=1:length(transvec)
+            for lll = 1:length(transvec)
                 settings.trans = transvec{lll};
                 tmpmax = 0;
-                for mmm=1:length(tauvec)
+                for mmm = 1:length(tauvec)
                     tau = tauvec(mmm);
                     [sol,relnormvec] = audio_inpainting(s,depl_s,Mask,fs,tau,settings);
                     tmp = snr_m(sol);
@@ -82,17 +84,30 @@ for iii=1:length(snum)
                     fprintf('%d: %s (%5s) - SNR: %2.2f',snum(iii),settings.trans,settings.thres, snr_m(sol));
                     zzz = zzz + 1;
                     
-                    if tmp>tmpmax
+                    if tmp > tmpmax
                         tmpmax = tmp;
-                    elseif abs(tmp)< 0.66*tmpmax
+                    elseif abs(tmp) < 0.66*tmpmax && abs(tmp) > eps
                         fprintf('\ndecreasing value, cont.\n');
                         zzz = zzz + (length(tauvec)-mmm);
                         break;
                     end
                 end
             end
+            
+            % save results
+            if approximal
+                if new_settings
+                    save('results/02 approximal/Experiments_DRvsFistavsSynvsAna.mat','res');
+                else
+                    save('results/01 approximal/Experiments_DRvsFistavsSynvsAna.mat','res');
+                end
+            else
+                if new_settings
+                    save('results/02 proximal/Experiments_DRvsFistavsSynvsAna.mat','res');
+                else
+                    save('results/01 proximal/Experiments_DRvsFistavsSynvsAna.mat','res');
+                end
+            end
         end
     end
 end
-
-% save('Experiments_DRvsFistavsSynvsAna.mat','res');
